@@ -8,10 +8,12 @@ import java.util.*;
 public class KV {
     Map<String, Integer> kvMap;
     Map<Integer, Integer> vCntMap;
+    Stack<List<Map>> stack;
 
     KV () {
         kvMap = new HashMap<>();
         vCntMap = new HashMap<>();
+        stack = new Stack<>();
     }
 
     void set(String key, int value) {
@@ -75,12 +77,37 @@ public class KV {
             while (kvInputSc.hasNextLine()) {
                 String currentlineContent = kvInputSc.nextLine();
                 String[] strArr = currentlineContent.split("\\s+");
-                if (strArr[0].equals("SET")) {
+                if (strArr[0].equals("BEGIN")) {
+                    //save prev state
+                    List<Map> listMap = new ArrayList<>();
+                    listMap.add(kv.kvMap);
+                    listMap.add(kv.vCntMap);
+                    kv.stack.push(listMap);
+                }
+                else if (strArr[0].equals("ROLLBACK")) {
+                    List<Map> prev = kv.stack.pop();
+                    kv.kvMap = prev.get(0);
+                    kv.vCntMap = prev.get(1);
+                }
+                else if (strArr[0].equals("COMMIT")) {
+                    List<Map> prev = kv.stack.pop();
+                }
+                else if (strArr[0].equals("SET")) {
                     kv.set(strArr[1], Integer.valueOf(strArr[2]));
                 } else if (strArr[0].equals("GET")) {
-                    String res = kv.get(strArr[1]);
-                    writer.write(res);
-                    writer.newLine();
+//                    if (!kv.stack.isEmpty()) {
+//                        List<Map> prev = kv.stack.peek();
+//                        Map<String, Integer> map = prev.get(0);
+//                        String res = String.valueOf(map.get(strArr[1]));
+//                        writer.write(res);
+//                        writer.newLine();
+////                        kv.kvMap = prev.get(0);
+////                        kv.vCntMap = prev.get(1);
+//                    } else {
+                        String res = kv.get(strArr[1]);
+                        writer.write(res);
+                        writer.newLine();
+//                    }
                 } else if (strArr[0].equals("UNSET")) {
                     kv.unset(strArr[1]);
                 } else if (strArr[0].equals("NUMWITHVALUE")) {
@@ -92,6 +119,27 @@ public class KV {
                 }
                 lineNumber++;
             }
+
+
+            /*
+
+        Stack
+        Save State
+        Save State
+BEGIN --> push
+SET a 10
+GET a
+BEGIN --> push
+SET a 20
+GET a
+ROLLBACK --> pop
+GET a
+ROLLBACK --> pop
+GET a
+END
+
+COMMIT -> pop and overwrite
+             */
 
             //ToDo : Successful code fir input
 //            int lineNumber = 0;
